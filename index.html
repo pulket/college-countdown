@@ -27,6 +27,7 @@
   --exam: #e2483b;
   --off: #109c74;       /* holidays / days off */
   --place: #2f72de;     /* placement weeks */
+  --event: #8b4fd6;     /* Avartan / institute event week */
   --on-color: #ffffff;
   --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
   --f-body: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -142,6 +143,7 @@ h2 {
 .wall .left { stroke: var(--chalk-dim); opacity: .5; stroke-dasharray: .05 .07; stroke-width: 2.4; }
 .wall .left.t-exam { stroke: var(--exam); opacity: .8; }
 .wall .left.t-place { stroke: var(--place); opacity: .8; }
+.wall .left.t-event { stroke: var(--event); opacity: .8; }
 .wall .now { stroke: var(--hi-ink); stroke-width: 4.5; opacity: 1; animation: nowp 1.4s ease-in-out infinite; }
 .wall path:hover { stroke-width: 5; }
 .wall .gap { width: 100%; height: 0; display: flex; align-items: center; gap: 10px; margin: 6px 0; }
@@ -158,6 +160,7 @@ h2 {
 .track .seg.class { background: var(--cls); }
 .track .seg.exam { background: var(--exam); }
 .track .seg.place { background: var(--place); }
+.track .seg.event { background: var(--event); }
 .track .seg.brk { background: repeating-linear-gradient(135deg, var(--board-3) 0 6px, var(--board-2) 6px 12px); color: var(--chalk-dim); }
 .track .past { position: absolute; inset: 0 auto 0 0; background: rgba(248,249,251,.68); pointer-events: none; border-right: 0; }
 .track .you { position: absolute; top: -8px; bottom: -8px; width: 4px; background: var(--hi-ink); border-radius: 2px; box-shadow: 0 0 0 4px rgba(255,216,74,.55); }
@@ -170,7 +173,12 @@ h2 {
 .chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--board-2); color: var(--chalk); font: 500 13px var(--f-body); }
 button.chip { cursor: pointer; }
 button.chip:hover { border-color: var(--chalk-dim); }
-button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+button.chip[aria-pressed="true"] { border-color: var(--chalk); box-shadow: inset 0 0 0 1px var(--chalk); }
+button.chip[aria-pressed="true"]::after { content: "✓"; font-weight: 700; margin-left: -2px; }
+button.chip[aria-pressed="false"] { color: var(--chalk-dim); border-style: dashed; }
+button.chip[aria-pressed="false"]::after { content: "+"; font-weight: 700; margin-left: -2px; }
+button.chip[aria-pressed="false"] i { opacity: .5; }
+.legend-label { font-family: var(--f-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--chalk-dim); flex: none; }
 .chip i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 .chip.reset { margin-left: auto; color: var(--chalk-dim); }
 .months { display: grid; grid-template-columns: repeat(auto-fill, minmax(206px, 1fr)); gap: 14px; }
@@ -200,7 +208,9 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
 .cell.uoff::after { content: ""; position: absolute; inset: 22%; background: linear-gradient(45deg, transparent 45%, var(--off) 45% 55%, transparent 55%), linear-gradient(-45deg, transparent 45%, var(--off) 45% 55%, transparent 55%); opacity: .55; }
 .cell.uon { box-shadow: inset 0 0 0 2px var(--hi-ink); background: var(--hi); color: var(--chalk); opacity: 1; }
 .cell.today { box-shadow: 0 0 0 2px var(--board-2), 0 0 0 4px var(--hi-ink); opacity: 1; z-index: 1; font-weight: 700; }
+.cell.event { background: var(--event); color: var(--on-color); }
 .cell.catoff { opacity: .2; }
+.cell.catin { background: color-mix(in srgb, var(--cls) 62%, var(--board-2)); color: var(--on-color); box-shadow: none; }
 .heat-note { color: var(--chalk-dim); font-size: 13px; margin-top: 10px; }
 .swipe-hint { display: none; }
 .tip { position: fixed; z-index: 50; pointer-events: none; background: var(--chalk); color: var(--board-2); padding: 7px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.35; max-width: 240px; box-shadow: 0 8px 24px rgba(22,26,34,.22); }
@@ -226,6 +236,59 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
 .stat.hl span { color: var(--chalk); }
 
 
+/* Stickers: white die-cut border, slight tilt, peel-on pop */
+.stk { display: block; flex: none; background: #fff; border: 4px solid #fff; border-radius: 14px; object-fit: cover; aspect-ratio: 1;
+  box-shadow: 0 1px 2px rgba(22,26,34,.14), 0 8px 18px -8px rgba(22,26,34,.35); transform: rotate(var(--r, -4deg));
+  animation: peel .55s cubic-bezier(.2,1.6,.4,1) both; animation-delay: var(--d, .2s); transition: transform .2s; }
+.stk:hover { transform: rotate(calc(var(--r, -4deg) * -1)) scale(1.06); }
+.stk.xs { width: 30px; border-width: 2px; border-radius: 8px; }
+.stk.sm { width: 44px; border-width: 3px; border-radius: 10px; }
+.stk.md { width: 64px; border-width: 3px; border-radius: 12px; }
+.stk.lg { width: clamp(104px, 24vw, 170px); border-width: 5px; border-radius: 18px; }
+.stk.wide { aspect-ratio: auto; }
+@keyframes peel { from { opacity: 0; transform: rotate(calc(var(--r, -4deg) - 14deg)) scale(.4); } }
+.count-row { display: flex; align-items: flex-start; gap: clamp(8px, 2vw, 22px); }
+.count-row .stk { margin-top: .6em; }
+.top .stk { animation-delay: .1s; }
+.card-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card-row > :first-child { min-width: 0; flex: 1; }
+.sec-head .h-with { display: flex; align-items: center; gap: 12px; }
+.wall-break .stk { flex: none; }
+.wall-end { display: flex; align-items: center; gap: 8px; font-family: var(--f-mono); font-size: 11px; color: var(--chalk-dim); letter-spacing: .06em; text-transform: uppercase; }
+.you-label { display: flex; align-items: center; gap: 6px; }
+.you-label .stk { width: 26px; border-width: 2px; border-radius: 7px; margin-block: -6px; }
+.card, .month { position: relative; }
+#servedStk { display: contents; }
+/* stuck over a card's corner, like a sticker slapped on a notebook */
+.stk.corner { position: absolute; top: -18px; right: -12px; z-index: 3; }
+.stk.corner.md { width: 70px; }
+.stat { position: relative; }
+.stats { row-gap: 26px; padding-top: 10px; }
+.stat .stk { position: absolute; top: -16px; right: -8px; width: 54px; z-index: 2; }
+.sec-head .h-with .stk { width: 54px; border-width: 4px; border-radius: 12px; }
+.month .stk.corner { width: 54px; top: -16px; right: -10px; }
+.up .what .stk { width: 50px; }
+.collage { display: flex; flex-wrap: wrap; justify-content: center; padding: 18px 10px 8px; }
+.collage .stk { width: 78px; margin: -7px -6px; border-width: 4px; }
+.collage .stk:hover { z-index: 5; transform: rotate(0) scale(1.25); }
+.collage-cap { text-align: center; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--chalk-dim); margin-top: 14px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 12px;
+  background: var(--chalk); color: var(--board-2); padding: 10px 16px 10px 10px; border-radius: 16px; box-shadow: 0 12px 30px rgba(22,26,34,.3); font-weight: 500; max-width: calc(100% - 32px); }
+.toast .stk { border-color: var(--board-2); }
+.flyer { position: fixed; z-index: 45; pointer-events: none; width: 76px; animation: fly 1.6s cubic-bezier(.2,.7,.3,1) forwards; }
+@keyframes fly { 0% { opacity: 0; transform: translate(0,0) rotate(0) scale(.3); } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--fx), var(--fy)) rotate(var(--fr)) scale(1); } }
+.mydays { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.mydays-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.saved { font-family: var(--f-mono); font-size: 11px; color: var(--off); }
+.daypick { display: flex; gap: 6px; flex-wrap: wrap; }
+.daypick button { width: 46px; height: 46px; border-radius: 12px; border: 1.5px dashed var(--line); background: var(--board-2); color: var(--chalk-dim);
+  font: 700 13px var(--f-mono); cursor: pointer; transition: transform .15s, background .15s; -webkit-tap-highlight-color: transparent; }
+.daypick button[aria-pressed="true"] { background: var(--cls); border: 1.5px solid var(--cls); color: var(--on-color); }
+.daypick button:active { transform: scale(.92); }
+.daypick button:focus-visible { outline: 2px solid var(--hi-ink); outline-offset: 2px; }
+.cell.free { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.up .what i.event { background: var(--event); }
+.up .what .stk { --r: 5deg; }
 #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
 
 @media (max-width: 860px) {
@@ -258,7 +321,10 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
   .chip { flex: none; padding: 7px 12px; }
   .chip.reset { margin-left: 0; }
   /* months become a swipeable row of big, tappable cards */
-  .months { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin-inline: -16px; padding: 4px 16px 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .months { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin-inline: -16px; padding: 22px 16px 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .collage .stk { width: 62px; margin: -5px -5px; }
+  .stk.corner.md { width: 58px; }
+  .next-off .t { padding-right: 34px; }
   .months::-webkit-scrollbar { display: none; }
   .month { flex: 0 0 86%; scroll-snap-align: center; padding: 16px; }
   .mhead strong { font-size: 26px; }
@@ -290,13 +356,20 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
   <section class="hero">
     <div class="count-block">
       <div class="eyebrow">College days left</div>
-      <button class="big" id="big" aria-label="College days left" title="Tap for a celebration"></button>
+      <div class="count-row">
+        <button class="big" id="big" aria-label="College days left" title="Tap for a celebration"></button>
+        <span id="heroStk"></span>
+      </div>
       <div class="count-label">
         <strong id="countWord">days of college</strong>
         <span id="countSub"></span>
       </div>
       <p class="mood" id="mood"></p>
-      <div class="tap-hint">Weekends, holidays and the winter break are already removed.</div>
+      <div class="mydays">
+        <div class="mydays-head"><span class="legend-label">My class days</span><span class="saved" id="saved" hidden>Saved on this device ✓</span></div>
+        <div class="daypick" id="daypick" role="group" aria-label="My class days"></div>
+        <div class="tap-hint" id="dayHint"></div>
+      </div>
     </div>
     <div class="side">
       <div class="card served">
@@ -305,15 +378,19 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
           <circle class="fg" id="ringFg" cx="50" cy="50" r="42"></circle>
           <text id="ringTxt" x="50" y="58" text-anchor="middle">0%</text>
         </svg>
-        <div class="txt">
+        <div class="txt" style="flex:1">
           <div class="eyebrow">Served so far</div>
           <div class="n" id="servedN"></div>
           <div class="eyebrow" id="servedSub" style="margin-top:4px"></div>
         </div>
+        <span id="servedStk"></span>
       </div>
-      <div class="card">
-        <div class="eyebrow">Last exam ends · Sat 6 Mar 2027, 5 PM</div>
-        <div class="clock" id="clock"></div>
+      <div class="card card-row">
+        <div>
+          <div class="eyebrow">Last exam ends · Sat 6 Mar 2027, 5 PM</div>
+          <div class="clock" id="clock"></div>
+        </div>
+        <img class="stk md corner" src="stickers/chair-kitten.webp" alt="Kitten waiting on a chair" style="--r:7deg;--d:.5s">
       </div>
       <div class="card next-off" id="nextOff"></div>
     </div>
@@ -321,8 +398,8 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
 
   <section>
     <div class="sec-head">
-      <h2>The wall</h2>
-      <p>One chalk mark for every college day of second year. Solid marks are done. Dotted ones are still coming. Hover a mark to see its date.</p>
+      <div class="h-with"><h2>The wall</h2><img class="stk sm" src="stickers/grumpy-kid.webp" alt="Grumpy kid" style="--r:6deg"></div>
+      <p>One pen mark for every college day of second year. Solid marks are done. Dotted ones are still coming. Hover a mark to see its date.</p>
     </div>
     <div class="wall" id="wall"></div>
     <div class="wall-key">
@@ -330,13 +407,14 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
       <span><i style="background:var(--hi)"></i>Today</span>
       <span><i style="background:var(--chalk-dim)"></i>Class day left</span>
       <span><i style="background:var(--exam)"></i>Exam day left</span>
+      <span><i style="background:var(--event)"></i>Avartan day left</span>
       <span><i style="background:var(--place)"></i>Placement day left</span>
     </div>
   </section>
 
   <section>
     <div class="sec-head">
-      <h2>Where you are</h2>
+      <div class="h-with"><h2>Where you are</h2><img class="stk sm" src="stickers/sulk-baby.webp" alt="Sulking baby" style="--r:-6deg"></div>
       <p id="trackSub"></p>
     </div>
     <div class="track-wrap" id="trackWrap"></div>
@@ -345,8 +423,8 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
 
   <section>
     <div class="sec-head">
-      <h2>Every day, Jun → Mar</h2>
-      <p>Tap a college day to mark it off (leave, sick day, bunk). Tap a weekend or holiday to add it back (Saturday exam, extra class). Your marks stay in this browser.</p>
+      <div class="h-with"><h2>Every day, Jun → Mar</h2><img class="stk sm" src="stickers/think-girl.webp" alt="Girl thinking" style="--r:5deg"></div>
+      <p>Tap a college day to mark it off (leave, sick day, bunk). Tap any other day to add it (Saturday exam, extra class). The chips below choose which kinds of day count. Everything is saved in this browser.</p>
     </div>
     <div class="legend" id="legend"></div>
     <div class="months" id="heat"></div>
@@ -356,35 +434,44 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
 
   <section class="duo">
     <div>
-      <div class="sec-head"><h2>Coming up</h2></div>
+      <div class="sec-head"><div class="h-with"><h2>Coming up</h2><span id="greetStk"></span></div></div>
       <ul class="up" id="up"></ul>
     </div>
     <div>
-      <div class="sec-head"><h2>By the numbers</h2></div>
+      <div class="sec-head"><div class="h-with"><h2>By the numbers</h2><img class="stk sm" src="stickers/smug-girl.webp" alt="Smug girl" style="--r:-5deg"></div></div>
       <div class="stats" id="stats"></div>
     </div>
   </section>
 
+  <section>
+    <div class="collage" id="collage"></div>
+    <div class="collage-cap">Tap the big number for a sticker storm</div>
+  </section>
+
 </div>
 <div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" hidden></div>
 
 <script>
 (() => {
-  // ---------- Calendar data (from Academic Calendar 2026–27, 2nd year column) ----------
-  const START = '2026-06-15', END = '2027-03-07';       // heatmap range: Mon → Sun, 38 weeks
-  const CAMPUS = [['2026-06-15', '2026-12-05'], ['2027-01-04', '2027-03-06']];
-  const BREAK = ['2026-12-06', '2027-01-03'];
+  // ---------- Calendar data (Academic Calendar 2026–27, 2nd year column, with the 23 Sep revision) ----------
+  const START = '2026-06-15', END = '2027-03-07';
+  const CAMPUS = [['2026-06-15', '2026-12-12'], ['2027-01-04', '2027-03-06']];
+  const BREAK = ['2026-12-13', '2027-01-03'];
   const EXAMS = [
     ['2026-07-16', '2026-07-18', 'Mid Term · Module V'],
     ['2026-08-24', '2026-08-29', 'End Term · Module V'],
     ['2026-10-08', '2026-10-10', 'Mid Term · Module VI'],
-    ['2026-11-30', '2026-12-05', 'End Term · Module VI'],
+    ['2026-12-06', '2026-12-12', 'End Term · Module VI (revised)'],
     ['2027-02-04', '2027-02-06', 'Mid Term · Module VII'],
     ['2027-03-01', '2027-03-06', 'End Term · Module VII'],
   ];
   const PLACE = [
     ['2026-11-21', '2026-11-28', 'Lateral Recruitment Process (LRP)'],
     ['2027-01-16', '2027-01-19', 'Campus Recruitment Process (CRP)'],
+  ];
+  const EVENTS = [
+    ['2026-11-30', '2026-12-05', 'Avartan (revised)'],
   ];
   const HOLIDAYS = {
     '2026-08-15': 'Independence Day',
@@ -416,45 +503,47 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     ['2026-11-14', '2026-11-14', 'Sansmaran'],
     ['2026-11-19', '2026-11-20', 'Faculty feedback · Module VI'],
     ['2026-11-26', '2026-11-26', 'Samvidhan Diwas'],
-    ['2026-12-06', '2026-12-12', 'Avartan'],
     ['2026-12-21', '2026-12-21', 'Module VI results'],
     ['2027-02-06', '2027-02-06', 'Re-Exam · Module VI'],
     ['2027-02-15', '2027-02-20', 'Surprise test · Module VII'],
     ['2027-02-25', '2027-02-26', 'Faculty feedback · Module VII'],
     ['2027-03-20', '2027-03-20', 'Module VII results'],
   ];
+  // [date, label, dot colour, sticker]
   const MILESTONES = [
-    ['2026-10-14', 'Mid-term VI answer sheets shown', ''],
-    ['2026-10-20', 'Dussehra · holiday', 'off'],
-    ['2026-11-02', 'Surprise test · Module VI (2–6 Nov)', 'exam'],
-    ['2026-11-08', 'Diwali', 'off'],
-    ['2026-11-09', 'Institute holiday', 'off'],
-    ['2026-11-20', 'Last class of Module VI', ''],
-    ['2026-11-21', 'Lateral Recruitment Process (21–28 Nov)', 'place'],
-    ['2026-11-24', 'Guru Nanak Jayanti · holiday', 'off'],
-    ['2026-11-30', 'End Term · Module VI (30 Nov–5 Dec)', 'exam'],
-    ['2026-12-06', 'Winter break starts · Avartan (6–12 Dec)', 'off'],
-    ['2026-12-21', 'Module VI results', ''],
-    ['2027-01-04', 'Module VII begins. The last module.', 'big'],
-    ['2027-01-16', 'Campus Recruitment Process (16–19 Jan)', 'place'],
-    ['2027-01-26', 'Republic Day · holiday', 'off'],
-    ['2027-02-04', 'Mid Term · Module VII (4–6 Feb)', 'exam'],
-    ['2027-02-11', 'Saraswati Puja · holiday', 'off'],
-    ['2027-02-15', 'Surprise test · Module VII (15–20 Feb)', 'exam'],
-    ['2027-02-19', 'Shivaji Maharaj Jayanti · holiday', 'off'],
-    ['2027-02-27', 'Last class. Ever.', 'big'],
-    ['2027-03-01', 'End Term · Module VII (1–6 Mar)', 'exam'],
-    ['2027-03-06', 'Last paper. Second year done.', 'big'],
-    ['2027-03-20', 'Module VII results', ''],
-    ['2027-04-03', 'Convocation', 'big'],
+    ['2026-10-14', 'Mid-term VI answer sheets shown', '', 'eyeroll'],
+    ['2026-10-20', 'Dussehra · holiday', 'off', 'heart-paws'],
+    ['2026-11-02', 'Surprise test · Module VI (2–6 Nov)', 'exam', 'stare-cat'],
+    ['2026-11-08', 'Diwali', 'off', 'flower-blob'],
+    ['2026-11-09', 'Institute holiday', 'off', 'blush-doodle'],
+    ['2026-11-20', 'Last class of Module VI', '', 'happy-bob'],
+    ['2026-11-21', 'Lateral Recruitment Process (21–28 Nov)', 'place', 'fight-kittens'],
+    ['2026-11-24', 'Guru Nanak Jayanti · holiday', 'off', 'heart-paws'],
+    ['2026-11-30', 'Avartan (30 Nov–5 Dec, revised)', 'event', 'bow-kitten'],
+    ['2026-12-06', 'End Term · Module VI (6–12 Dec, revised)', 'exam', 'shock-cat'],
+    ['2026-12-13', 'Winter break starts', 'off', 'boat-cat'],
+    ['2026-12-21', 'Module VI results', '', 'blur-cat'],
+    ['2027-01-04', 'Module VII begins. The last module.', 'big', 'grumpy-kid'],
+    ['2027-01-16', 'Campus Recruitment Process (16–19 Jan)', 'place', 'cool-kid'],
+    ['2027-01-26', 'Republic Day · holiday', 'off', 'heart-paws'],
+    ['2027-02-04', 'Mid Term · Module VII (4–6 Feb)', 'exam', 'shock-cat'],
+    ['2027-02-11', 'Saraswati Puja · holiday', 'off', 'flower-blob'],
+    ['2027-02-15', 'Surprise test · Module VII (15–20 Feb)', 'exam', 'stare-cat'],
+    ['2027-02-19', 'Shivaji Maharaj Jayanti · holiday', 'off', 'blush-doodle'],
+    ['2027-02-27', 'Last class. Ever.', 'big', 'heart-woman'],
+    ['2027-03-01', 'End Term · Module VII (1–6 Mar)', 'exam', 'squint-cat'],
+    ['2027-03-06', 'Last paper. Second year done.', 'big', 'storm-cat'],
+    ['2027-03-20', 'Module VII results', '', 'blur-cat'],
+    ['2027-04-03', 'Convocation', 'big', 'hearts-girl'],
   ];
   const TRACK = [
     ['2026-06-15', 'class', 'Module V'],
     ['2026-08-24', 'exam', 'End V'],
     ['2026-08-31', 'class', 'Module VI'],
     ['2026-11-21', 'place', 'LRP'],
-    ['2026-11-30', 'exam', 'End VI'],
-    ['2026-12-06', 'brk', 'Winter break'],
+    ['2026-11-30', 'event', 'Avartan'],
+    ['2026-12-06', 'exam', 'End VI'],
+    ['2026-12-13', 'brk', 'Winter break'],
     ['2027-01-04', 'class', 'Module VII'],
     ['2027-03-01', 'exam', 'End VII'],
   ];
@@ -479,34 +568,57 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
   for (let k = START; k <= END; k = addD(k, 1)) allDays.push(k);
 
   // ---------- State (per-viewer, browser only) ----------
+  // Saved per browser, so the class days and marks are still there next visit.
   const LS = 'dtf-v1';
-  let state = { overrides: {}, cats: { exam: true, place: true } };
-  try { const s = JSON.parse(localStorage.getItem(LS)); if (s && s.overrides) state = { overrides: s.overrides, cats: Object.assign({ exam: true, place: true }, s.cats) }; } catch (e) {}
-  const save = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} };
+  const DEF_CATS = { class: true, exam: true, event: true, place: true, holiday: false, brk: false };
+  const DEF_DAYS = [false, true, true, true, true, true, false];   // Sun..Sat
+  const fresh = () => ({ overrides: {}, cats: { ...DEF_CATS }, days: [...DEF_DAYS] });
+  let state = fresh();
+  try {
+    const s = JSON.parse(localStorage.getItem(LS));
+    if (s && s.overrides) state = {
+      overrides: s.overrides,
+      cats: { ...DEF_CATS, ...s.cats },
+      days: Array.isArray(s.days) && s.days.length === 7 ? s.days.map(Boolean) : [...DEF_DAYS],
+    };
+  } catch (e) {}
+  let savedT;
+  const save = () => {
+    try {
+      localStorage.setItem(LS, JSON.stringify(state));
+      const el = $('saved'); el.hidden = false; clearTimeout(savedT); savedT = setTimeout(() => el.hidden = true, 2500);
+    } catch (e) {}
+  };
 
   // ---------- Day classification ----------
+  // Class days follow the weekday picker. Exam, Avartan and placement days count on any
+  // Mon–Fri (everyone sits exams), and on a Sat/Sun only if that day is picked.
   function info(k) {
     const notes = NOTES.filter(n => inR(k, n[0], n[1])).map(n => n[2]);
     const ex = EXAMS.find(e => inR(k, e[0], e[1]));
     const pl = PLACE.find(p => inR(k, p[0], p[1]));
+    const ev = EVENTS.find(p => inR(k, p[0], p[1]));
     if (ex) notes.unshift(ex[2]);
     if (pl) notes.unshift(pl[2]);
+    if (ev) notes.unshift(ev[2]);
     const hol = HOLIDAYS[k];
     if (hol) notes.unshift(hol);
     const campus = CAMPUS.some(c => inR(k, c[0], c[1]));
     const brk = inR(k, BREAK[0], BREAK[1]);
-    const wd = dow(k);
-    let type, cat = 'class';
-    if (ex) cat = 'exam'; else if (pl) cat = 'place';
-    if (brk) type = 'brk';
-    else if (!campus) type = 'none';
-    else if (wd === 0 || wd === 6) type = 'weekend';
-    else if (hol) type = 'holiday';
-    else type = cat;
-    let base = (type === 'class') || (type === 'exam' && state.cats.exam) || (type === 'place' && state.cats.place);
+    const wd = dow(k), wkend = wd === 0 || wd === 6, mine = state.days[wd];
+    const C = state.cats;
+    let cat = ex ? 'exam' : pl ? 'place' : ev ? 'event' : 'class';
+    let type, base;
+    if (brk) { type = 'brk'; base = C.brk && mine && (!hol || C.holiday); }
+    else if (!campus) { type = 'none'; base = false; }
+    else if (hol) { type = 'holiday'; base = C.holiday && (mine || (cat !== 'class' && !wkend)); }
+    else if (cat === 'class') { type = mine ? 'class' : wkend ? 'weekend' : 'free'; base = mine && C.class; }
+    else { type = wkend && !mine ? 'weekend' : cat; base = type === cat && C[cat]; }
     const ov = state.overrides[k];
     const counted = ov === 'off' ? false : ov === 'on' ? true : base;
-    return { k, type, cat, notes, counted, ov, base, editable: type !== 'none', catOff: (type === 'exam' && !state.cats.exam) || (type === 'place' && !state.cats.place) };
+    return { k, type, cat, notes, counted, ov, base, editable: type !== 'none',
+      catOff: ['class', 'exam', 'place', 'event'].includes(type) && !C[type],
+      catIn: base && (type === 'holiday' || type === 'brk') };
   }
 
   // ---------- Render ----------
@@ -564,6 +676,23 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     return 'Long road ahead. Pace your leaves.';
   }
 
+  // ---------- Stickers ----------
+  const ALT = {
+    'think-girl': 'Girl thinking', 'blush-doodle': 'Blushing doodle', 'happy-bob': 'Happy girl', 'gm-hamster': 'Hamster saying good morning',
+    'stare-cat': 'Wide-eyed white cat', 'sulk-baby': 'Sulking baby', 'hearts-girl': 'Girl cheering in hearts', 'cry-cat': 'Crying cat',
+    'please-kitten': 'Kitten begging please', 'heart-paws': 'Cat holding up a heart', 'smug-girl': 'Smug girl', 'cool-kid': 'Kid in sunglasses',
+    'storm-cat': 'Cat with arms raised to a lightning sky', 'fight-kittens': 'Two kittens fighting', 'sad-baby': 'Sad baby', 'teddy-hug': 'Kid hugging a teddy',
+    'squint-cat': 'Squinting cat', 'flower-blob': 'Doodle holding flowers', 'bow-kitten': 'Kitten with a bow', 'side-eye-cat': 'Cat giving side-eye',
+    'dreamy-girl': 'Girl with hands on cheeks', 'blur-cat': 'Disappointed cat', 'tired-girl': 'Tired girl rubbing eyes', 'loaf-kitten': 'Grumpy kitten loaf',
+    'boat-cat': 'Cat drifting on a boat', 'shock-cat': 'Shocked cat', 'chair-kitten': 'Kitten waiting on a chair', 'eyeroll': 'Eye roll',
+    'grumpy-kid': 'Grumpy kid', 'heart-woman': 'Smiling with hearts', 'wave-woman': 'Waving hi', 'street-kitten': 'Kitten waiting on a street chair',
+  };
+  const NAMES = Object.keys(ALT);
+  const stk = (name, size = 'sm', r = -4, d = .2, extra = '') =>
+    `<img class="stk ${size}${name === 'wave-woman' ? ' wide' : ''}" src="stickers/${name}.webp" alt="${ALT[name]}" style="--r:${r}deg;--d:${d}s" ${extra}>`;
+  const heroSticker = rem => rem === 0 ? 'storm-cat' : rem < 10 ? 'hearts-girl' : rem < 25 ? 'dreamy-girl' : rem < 60 ? 'think-girl' : rem < 100 ? 'tired-girl' : 'cry-cat';
+  function setStk(id, html) { const el = $(id); if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; } }
+
   function seeded(str) {
     let h = 2166136261;
     for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -579,7 +708,7 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     college.forEach(d => {
       if (prev && prev < BREAK[0] && d.k > BREAK[1]) {
         const b = document.createElement('div');
-        b.className = 'wall-break'; b.textContent = 'Winter break · 6 Dec – 3 Jan';
+        b.className = 'wall-break'; b.innerHTML = `${stk('boat-cat', 'xs', 6, 0)}<span>Winter break · 13 Dec – 3 Jan</span>`;
         wall.appendChild(b); svg = null;
       }
       if (!svg || slot === 5) newGroup();
@@ -606,6 +735,10 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
       svg.appendChild(path);
       slot++; prev = d.k;
     });
+    const end = document.createElement('div');
+    end.className = 'wall-end';
+    end.innerHTML = `${stk('street-kitten', 'sm', 4, .4)}<span>the last mark</span>`;
+    wall.appendChild(end);
   }
 
   function renderTrack() {
@@ -617,7 +750,7 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     }).join('');
     const pos = Math.max(0, Math.min(1, diffD(TRACK[0][0], today) / span));
     const label = pos >= 1 ? 'Finished' : 'You are here';
-    wrap.innerHTML = `<div class="you-label" style="left:clamp(48px, ${pos * 100}%, calc(100% - 48px))">${label}</div>
+    wrap.innerHTML = `<div class="you-label" style="left:clamp(70px, ${pos * 100}%, calc(100% - 70px))">${stk('side-eye-cat', 'xs', -6, .3)}${label}</div>
       <div class="track">${segs}<div class="past" style="width:${pos * 100}%"></div><div class="you" style="left:calc(${pos * 100}% - 1.5px)"></div></div>`;
     const cur = [...TRACK].reverse().find(s => s[0] <= today);
     const calLeft = diffD(today, '2027-03-06');
@@ -626,20 +759,51 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
       : `Second year starts ${fmtY(TRACK[0][0])}.`;
   }
 
+  const CHIPS = [
+    ['class', 'Class days', 'background:var(--cls)'],
+    ['exam', 'Exam days', 'background:var(--exam)'],
+    ['event', 'Avartan', 'background:var(--event)'],
+    ['place', 'Placement weeks', 'background:var(--place)'],
+    ['holiday', 'Holidays', 'background:var(--off)'],
+    ['brk', 'Winter break', 'background:repeating-linear-gradient(135deg,var(--board-3) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--line)'],
+  ];
   function renderLegend() {
     const L = $('legend');
-    L.innerHTML = `
-      <span class="chip"><i style="background:var(--chalk)"></i>Class day</span>
-      <button class="chip" data-cat="exam" aria-pressed="${state.cats.exam}"><i style="background:var(--exam)"></i>Exam days</button>
-      <button class="chip" data-cat="place" aria-pressed="${state.cats.place}"><i style="background:var(--place)"></i>Placement weeks</button>
-      <span class="chip"><i style="background:var(--off)"></i>Holiday</span>
-      <span class="chip"><i style="box-shadow:inset 0 0 0 1px var(--line)"></i>Weekend</span>
-      <span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--board-3) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--line)"></i>Winter break</span>
-      <button class="chip reset" id="reset">Clear my marks</button>`;
+    L.innerHTML = `<span class="legend-label">Count</span>` +
+      CHIPS.map(([k, label, sw]) => `<button class="chip" data-cat="${k}" aria-pressed="${!!state.cats[k]}"><i style="${sw}"></i>${label}</button>`).join('') +
+      `<button class="chip reset" id="reset">Reset everything</button>`;
     L.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => {
-      state.cats[b.dataset.cat] = !state.cats[b.dataset.cat]; save(); render();
+      const k = b.dataset.cat;
+      state.cats[k] = !state.cats[k]; save(); render();
+      toast(state.cats[k] ? 'eyeroll' : 'smug-girl', `${CHIPS.find(c => c[0] === k)[1]} ${state.cats[k] ? 'now count' : 'no longer count'}`);
     });
-    $('reset').onclick = () => { state = { overrides: {}, cats: { exam: true, place: true } }; save(); render(); };
+    $('reset').onclick = () => { state = fresh(); save(); render(); toast('flower-blob', 'Back to the calendar defaults'); };
+  }
+
+  const DAYNAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const PICK_ORDER = [1, 2, 3, 4, 5, 6, 0];
+  function renderDays() {
+    $('daypick').innerHTML = PICK_ORDER.map(i => `<button data-wd="${i}" aria-pressed="${state.days[i]}" aria-label="${DAYNAMES[i]}">${DAYNAMES[i].slice(0, 2)}</button>`).join('');
+    const picked = PICK_ORDER.filter(i => state.days[i]).map(i => DAYNAMES[i]);
+    $('dayHint').textContent = picked.length === 0
+      ? 'No class days picked. Only exam, Avartan and placement days are counted.'
+      : picked.length === 5 && !state.days[0] && !state.days[6]
+        ? 'Tap a day to change it. Exam and Avartan days count on every weekday anyway.'
+        : `Classes on ${picked.join(', ')}. Exam and Avartan days still count on every weekday.`;
+  }
+  $('daypick').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const i = +b.dataset.wd;
+    state.days[i] = !state.days[i]; save(); render();
+    const n = state.days.filter(Boolean).length;
+    toast(state.days[i] ? 'tired-girl' : n <= 2 ? 'cool-kid' : 'smug-girl', state.days[i] ? `${DAYNAMES[i]} is a class day` : n <= 2 ? `Only ${n} class day${n === 1 ? '' : 's'} a week. Lucky you.` : `No classes on ${DAYNAMES[i]}`);
+  });
+
+  let toastT;
+  function toast(name, msg) {
+    const t = $('toast');
+    t.innerHTML = `${stk(name, 'sm', -6, 0)}<span>${msg}</span>`;
+    t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2400);
   }
 
   let heatScrolled = false;
@@ -656,7 +820,7 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
       const nLeft = ds.filter(d => d.counted && d.k >= today).length;
       const nAll = ds.filter(d => d.counted).length;
       const cur = m0.slice(0, 7) === curM;
-      html += `<div class="month${cur ? ' cur' : ''}" data-m="${m0.slice(0, 7)}"><div class="mhead"><strong>${MON[mo]} ${y}</strong><span>${nLeft ? `<b>${nLeft}</b> left · ` : ''}${nAll} days</span></div><div class="mgrid">`;
+      html += `<div class="month${cur ? ' cur' : ''}" data-m="${m0.slice(0, 7)}">${cur ? stk('please-kitten', 'sm corner', 8, .3) : ''}<div class="mhead"><strong>${MON[mo]} ${y}</strong><span>${nLeft ? `<b>${nLeft}</b> left · ` : ''}${nAll} days</span></div><div class="mgrid">`;
       html += ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(w => `<span class="wd">${w}</span>`).join('');
       for (let b = 0; b < (dow(m0) + 6) % 7; b++) html += '<span class="cell blank"></span>';
       ds.forEach(d => {
@@ -666,6 +830,7 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
         if (d.ov === 'off' && d.base) cls.push('uoff');
         if (d.ov === 'on' && !d.base) cls.push('uon');
         if (d.catOff && !d.ov) cls.push('catoff');
+        if (d.catIn && !d.ov) cls.push('catin');
         if (d.k === today) cls.push('today');
         html += `<button class="${cls.join(' ')}" data-k="${d.k}" aria-label="${fmt(d.k)}${d.counted ? ', counted' : ', not counted'}" ${d.editable ? '' : 'tabindex="-1"'}>${toD(d.k).getUTCDate()}</button>`;
       });
@@ -691,13 +856,13 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     if (d.ov) delete state.overrides[d.k];
     else state.overrides[d.k] = d.base ? 'off' : 'on';
     save(); render();
-    const nb = $('heat').querySelector(`[data-k="${d.k}"]`);
-    if (nb) { showTip(nb); clearTimeout(tipT); tipT = setTimeout(() => tip.hidden = true, 2200); }
+    const now = state.overrides[d.k];
+    toast(now === 'off' ? 'smug-girl' : now === 'on' ? 'squint-cat' : 'blush-doodle',
+      now === 'off' ? `${fmt(d.k)} marked off. Enjoy.` : now === 'on' ? `${fmt(d.k)} added. Ugh.` : `${fmt(d.k)} back to normal`);
   });
-  let tipT;
   function showTip(b) {
     const d = info(b.dataset.k);
-    const state_ = d.ov === 'off' ? 'Marked off by you' : d.ov === 'on' ? 'Added by you' : d.counted ? 'Counts as a college day' : ({ weekend: 'Weekend', holiday: 'Holiday', brk: 'Winter break', none: 'Not in session' }[d.type] || 'Not counted');
+    const state_ = d.ov === 'off' ? 'Marked off by you' : d.ov === 'on' ? 'Added by you' : d.counted ? 'Counts as a college day' : ({ weekend: 'Weekend', free: 'Not one of your class days', holiday: 'Holiday', brk: 'Winter break', none: 'Not in session' }[d.type] || 'Not counted');
     tip.innerHTML = `<b>${fmt(d.k)} ${toD(d.k).getUTCFullYear()}</b>${state_}${d.notes.length ? '<br>' + d.notes.join(' · ') : ''}`;
     tip.hidden = false;
     const r = b.getBoundingClientRect();
@@ -723,12 +888,14 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     $('ringTxt').textContent = Math.round(pct) + '%';
     $('servedN').innerHTML = `${servedN} <em>/ ${total} days</em>`;
     $('servedSub').textContent = `${rem} to go`;
+    setStk('servedStk', stk(pct >= 80 ? 'happy-bob' : pct >= 50 ? 'loaf-kitten' : 'please-kitten', 'md corner', -6, .45));
+    setStk('heroStk', stk(heroSticker(rem), 'lg', 5, .9));
 
-    // next day off
+    // next day off (a day you would otherwise have had, that is not counted)
     let nk = null, label = '';
     for (let k = addD(today, 1); k <= '2027-03-06'; k = addD(k, 1)) {
       const d = info(k);
-      if (d.type === 'weekend' || d.type === 'none') continue;
+      if (['weekend', 'free', 'none'].includes(d.type)) continue;
       if (!d.counted) { nk = k; label = d.ov === 'off' ? 'Your day off' : d.type === 'brk' ? 'Winter break' : (HOLIDAYS[k] || 'Day off'); break; }
     }
     const no = $('nextOff');
@@ -736,9 +903,10 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
       const between = c.left.filter(d => d.k > today && d.k < nk).length;
       const dd = toD(nk);
       no.innerHTML = `<div class="badge"><div><b>${dd.getUTCDate()}</b><small>${MON[dd.getUTCMonth()]}</small></div></div>
-        <div class="t"><div class="eyebrow">Next weekday off</div><strong>${label}</strong><span>${fmt(nk)} · ${between === 0 ? 'right after today' : `${between} college day${between > 1 ? 's' : ''} before it`}</span></div>`;
+        <div class="t" style="flex:1"><div class="eyebrow">Next day off</div><strong>${label}</strong><span>${fmt(nk)} · ${between === 0 ? 'right after today' : `${between} college day${between > 1 ? 's' : ''} before it`}</span></div>
+        ${stk(between <= 3 ? 'flower-blob' : 'blush-doodle', 'md corner', -8, .6)}`;
     } else {
-      no.innerHTML = `<div class="badge"><div><b>∞</b><small>off</small></div></div><div class="t"><div class="eyebrow">Next weekday off</div><strong>All of them</strong><span>No more college days on the calendar.</span></div>`;
+      no.innerHTML = `<div class="badge"><div><b>∞</b><small>off</small></div></div><div class="t" style="flex:1"><div class="eyebrow">Next day off</div><strong>All of them</strong><span>No more college days on the calendar.</span></div>${stk('hearts-girl', 'md corner', -8, .6)}`;
     }
 
     // top bar
@@ -746,8 +914,11 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     const idx = c.college.findIndex(d => d.k === today);
     const status = td.counted
       ? `<span class="pill on">College day</span><span>day ${idx + 1} of ${total}</span>`
-      : `<span class="pill offd">${td.type === 'weekend' ? 'Weekend' : td.type === 'holiday' ? HOLIDAYS[today] : td.type === 'brk' ? 'Winter break' : td.ov === 'off' ? 'Your day off' : 'No college'}</span><span>not counted</span>`;
-    $('todayLine').innerHTML = `<span>${fmt(today)} ${toD(today).getUTCFullYear()}</span>${status}`;
+      : `<span class="pill offd">${td.type === 'weekend' ? 'Weekend' : td.type === 'free' ? 'No class today' : td.type === 'holiday' ? HOLIDAYS[today] : td.type === 'brk' ? 'Winter break' : td.ov === 'off' ? 'Your day off' : 'No college'}</span><span>not counted</span>`;
+    const todayStk = td.counted ? 'teddy-hug' : td.type === 'holiday' ? 'heart-paws' : td.type === 'brk' ? 'boat-cat' : 'cool-kid';
+    $('todayLine').innerHTML = `<span>${fmt(today)} ${toD(today).getUTCFullYear()}</span>${status}${stk(todayStk, 'xs', 6, .1)}`;
+    const hr = new Date().getHours();
+    setStk('greetStk', hr >= 4 && hr < 12 ? stk('gm-hamster', 'md', -4, .3) : stk('wave-woman', 'md', -4, .3));
 
     $('countWord').textContent = rem === 1 ? 'day of college' : 'days of college';
     $('countSub').textContent = td.counted ? 'including today' : `starting ${c.left[0] ? fmt(c.left[0].k) : '—'}`;
@@ -762,7 +933,7 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
       const col = c.left.filter(d => d.k > today && d.k < m[0]).length;
       const dd = toD(m[0]);
       return `<li><div class="d"><b>${dd.getUTCDate()} ${MON[dd.getUTCMonth()]}</b>${WD[dd.getUTCDay()]}</div>
-        <div class="what"><i class="${m[2]}"></i><span>${m[1]}</span></div>
+        <div class="what">${stk(m[3], 'sm', (m[0].charCodeAt(9) % 2 ? 6 : -6), .1)}<span>${m[1]}</span></div>
         <div class="in">in <b>${cal}</b> day${cal > 1 ? 's' : ''}<br><span class="sep2">${col} college day${col === 1 ? '' : 's'} away</span></div></li>`;
     }).join('') : '<li><div class="d"><b>—</b></div><div class="what">Nothing left on the calendar.</div></li>';
   }
@@ -773,16 +944,17 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     const fridays = left.filter(d => dow(d.k) === 5).length;
     const exams = left.filter(d => d.cat === 'exam').length;
     let sats = 0; for (let k = today; k < '2027-03-06'; k = addD(k, 1)) if (dow(k) === 6) sats++;
-    let hols = 0; for (let k = addD(today, 1); k <= '2027-03-06'; k = addD(k, 1)) { const d = info(k); if (d.type === 'holiday' || (d.ov === 'off' && d.base)) hols++; }
-    const weeks = (left.length / 5).toFixed(1);
+    let hols = 0; for (let k = addD(today, 1); k <= '2027-03-06'; k = addD(k, 1)) { const d = info(k); if (!d.counted && (d.type === 'holiday' && state.days[dow(k)] || d.ov === 'off')) hols++; }
+    const wkKey = k => { const d = toD(k); return Math.floor((d.getTime() / DAY + 3) / 7); };   // Mon-start week number
+    const weeks = new Set(left.map(d => wkKey(d.k))).size;
     $('stats').innerHTML = [
-      [weeks, 'five-day weeks of college left', true],
-      [mondays, 'Mondays still to survive'],
-      [fridays, 'Fridays left to look forward to'],
-      [exams, 'exam days left'],
-      [sats, 'weekends before the last paper'],
-      [hols, 'weekday holidays still ahead'],
-    ].map(s => `<div class="stat${s[2] ? ' hl' : ''}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('');
+      [weeks, 'weeks with college left', true, 'stare-cat'],
+      [mondays, 'Mondays still to survive', false, mondays >= 8 ? 'cry-cat' : mondays >= 3 ? 'sad-baby' : 'happy-bob'],
+      [fridays, 'Fridays left to look forward to', false, 'dreamy-girl'],
+      [exams, 'exam days left', false, exams > 6 ? 'shock-cat' : 'eyeroll'],
+      [sats, 'weekends before the last paper', false, 'cool-kid'],
+      [hols, 'days off still ahead', false, 'flower-blob'],
+    ].map((s, i) => `<div class="stat${s[2] ? ' hl' : ''}">${stk(s[3], 'sm', i % 2 ? 6 : -6, .15 + i * .07)}<b>${s[0]}</b><span>${s[1]}</span></div>`).join('');
   }
 
   function render() {
@@ -793,6 +965,7 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
     renderWall(c.college);
     renderTrack();
     renderLegend();
+    renderDays();
     renderHeat();
     renderUp(c);
     renderStats(c);
@@ -841,8 +1014,26 @@ button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through;
   }
   $('big').addEventListener('click', e => {
     const r = $('big').getBoundingClientRect();
-    burst(e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
+    const x = e.clientX || r.left + r.width / 2, y = e.clientY || r.top + r.height / 2;
+    burst(x, y);
+    if (reduce) return;
+    // sticker explosion
+    for (let i = 0; i < 7; i++) {
+      const n = NAMES[Math.floor(Math.random() * NAMES.length)];
+      const f = document.createElement('img');
+      f.className = 'stk flyer'; f.src = `stickers/${n}.webp`; f.alt = '';
+      const a = (i / 7) * Math.PI * 2 + Math.random() * .6;
+      f.style.left = (x - 38) + 'px'; f.style.top = (y - 38) + 'px';
+      f.style.setProperty('--fx', `${Math.cos(a) * (140 + Math.random() * 120)}px`);
+      f.style.setProperty('--fy', `${Math.sin(a) * (140 + Math.random() * 120) - 80}px`);
+      f.style.setProperty('--fr', `${(Math.random() - .5) * 80}deg`);
+      document.body.appendChild(f);
+      setTimeout(() => f.remove(), 1700);
+    }
   });
+
+  const cr = seeded('collage');
+  $('collage').innerHTML = NAMES.map((n, i) => stk(n, '', Math.round((cr() - .5) * 26), .05 * i, 'loading="lazy"')).join('');
 
   render();
   tick();
