@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f8f9fb">
+<meta name="description" content="Live countdown of second-year college days left, 2026–27.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%23ffd84a%22/><path d=%22M14 14v36M24 14v36M34 14v36M44 14v36M8 40L56 22%22 stroke=%22%23161a22%22 stroke-width=%225%22 stroke-linecap=%22round%22/></svg>">
+<style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<title>Days Till Freedom</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;800;900&family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a ruled-notebook page — giant highlighted count up top, pen tally wall of every college day, the term track, swipeable month calendars, and what's next. Single light look by choice. */
+:root {
+  --board: #f8f9fb;     /* notebook paper (names kept from the wall metaphor) */
+  --board-2: #ffffff;   /* cards */
+  --board-3: #eceef3;
+  --line: #dfe3ea;
+  --rule: rgba(52, 104, 196, .075);
+  --chalk: #161a22;     /* ink */
+  --chalk-dim: #697285;
+  --cls: #262c3a;       /* class-day cell */
+  --hi: #ffd84a;        /* highlighter fill */
+  --hi-ink: #c48a00;    /* highlighter as a line or text */
+  --exam: #e2483b;
+  --off: #109c74;       /* holidays / days off */
+  --place: #2f72de;     /* placement weeks */
+  --on-color: #ffffff;
+  --f-display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --f-body: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--board); color: var(--chalk); }
+body {
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(900px 500px at 10% -10%, rgba(255,216,74,.18), transparent 60%),
+    repeating-linear-gradient(180deg, transparent 0 31px, var(--rule) 31px 32px);
+}
+body::after {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .05;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 1180px; margin: 0 auto;
+  padding-inline: clamp(16px, 4vw, 40px);
+  padding-block: 20px 64px;
+  display: flex; flex-direction: column; gap: 56px;
+}
+.eyebrow {
+  font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--chalk-dim);
+}
+h2 {
+  font-family: var(--f-display); font-weight: 800; font-size: clamp(30px, 4vw, 44px);
+  line-height: 1; letter-spacing: .01em; text-transform: uppercase; margin: 0;
+  text-wrap: balance;
+}
+.sec-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 8px 24px; margin-bottom: 18px; }
+.sec-head p { margin: 0; color: var(--chalk-dim); max-width: 60ch; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+/* Top bar */
+.top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+.top .today { font-family: var(--f-mono); font-size: 12.5px; color: var(--chalk); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; border: 1px solid currentColor; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.on { color: var(--hi-ink); }
+.pill.on::before { animation: blink 1.6s ease-in-out infinite; }
+.pill.offd { color: var(--off); }
+@keyframes blink { 50% { opacity: .2; } }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 28px 48px; align-items: end; }
+.count-block { min-width: 0; }
+.big {
+  font-family: var(--f-display); font-weight: 900;
+  font-size: clamp(150px, 30vw, 360px); line-height: 1;
+  display: flex; position: relative; width: max-content; max-width: 100%;
+  cursor: pointer; user-select: none; color: var(--chalk);
+  margin: 6px 0 0 -0.04em;
+  background: none; border: 0; padding: 0;
+}
+.big:focus-visible { outline: 2px dashed var(--hi-ink); outline-offset: 8px; }
+.big::after {
+  content: ""; position: absolute; left: -3%; right: -5%; bottom: .08em; height: .3em;
+  background: var(--hi); transform: rotate(-1.6deg); z-index: -1; border-radius: 3px 10px 4px 12px;
+  opacity: .9;
+}
+.big { isolation: isolate; }
+.digit { height: 1em; overflow: hidden; display: inline-block; }
+.digit .strip { display: flex; flex-direction: column; transition: transform 2.1s cubic-bezier(.16,.84,.24,1); }
+.digit .strip span { height: 1em; display: block; text-align: center; }
+.digit.ghost { width: 0; transition: width .6s ease 1.6s; }
+.count-label { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin-top: 12px; }
+.count-label strong { font-family: var(--f-display); font-weight: 800; font-size: clamp(26px, 3.4vw, 38px); text-transform: uppercase; letter-spacing: .02em; line-height: 1; }
+.count-label span { color: var(--chalk-dim); font-size: 14px; }
+.mood { margin: 14px 0 0; font-size: clamp(16px, 1.6vw, 19px); max-width: 44ch; text-wrap: balance; }
+.tap-hint { color: var(--chalk-dim); font-size: 12.5px; margin-top: 8px; font-family: var(--f-mono); }
+
+.side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.card { background: var(--board-2); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(22,26,34,.04), 0 6px 18px -10px rgba(22,26,34,.12); }
+.served { display: flex; align-items: center; gap: 18px; }
+.ring { width: 92px; height: 92px; flex: none; }
+.ring circle { fill: none; stroke-width: 9; }
+.ring .bg { stroke: var(--board-3); }
+.ring .fg { stroke: var(--hi-ink); stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; transition: stroke-dashoffset 2.1s cubic-bezier(.16,.84,.24,1); }
+.ring text { fill: var(--chalk); font-family: var(--f-display); font-weight: 800; font-size: 26px; }
+.served .txt { min-width: 0; }
+.served .n { font-family: var(--f-display); font-weight: 800; font-size: 30px; line-height: 1.05; }
+.served .n em { font-style: normal; color: var(--chalk-dim); }
+.clock { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+.clock div { display: flex; flex-direction: column; align-items: flex-start; }
+.clock b { font-family: var(--f-mono); font-weight: 600; font-size: clamp(22px, 2.6vw, 30px); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.clock small { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: .12em; color: var(--chalk-dim); text-transform: uppercase; }
+.clock .sep { font-family: var(--f-mono); font-size: clamp(22px, 2.6vw, 30px); line-height: 1.1; color: var(--chalk-dim); }
+.next-off { display: flex; gap: 14px; align-items: center; }
+.next-off .badge { flex: none; width: 54px; height: 54px; border-radius: 12px; background: color-mix(in srgb, var(--off) 16%, transparent); border: 1px solid color-mix(in srgb, var(--off) 55%, transparent); color: var(--off); display: grid; place-items: center; text-align: center; line-height: 1; }
+.next-off .badge b { font-family: var(--f-display); font-size: 24px; font-weight: 800; display: block; }
+.next-off .badge small { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; }
+.next-off .t { min-width: 0; }
+.next-off .t strong { display: block; font-size: 16px; }
+.next-off .t span { color: var(--chalk-dim); font-size: 13.5px; }
+
+/* Tally wall */
+.wall { display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 22px; background: var(--board-2); border: 1px solid var(--line); border-radius: 14px; }
+.wall svg { width: 46px; height: 44px; overflow: visible; }
+.wall path { fill: none; stroke-linecap: round; stroke-width: 3; }
+.wall .served { stroke: var(--chalk); opacity: .85; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .35s ease-out forwards; }
+.wall .left { stroke: var(--chalk-dim); opacity: .5; stroke-dasharray: .05 .07; stroke-width: 2.4; }
+.wall .left.t-exam { stroke: var(--exam); opacity: .8; }
+.wall .left.t-place { stroke: var(--place); opacity: .8; }
+.wall .now { stroke: var(--hi-ink); stroke-width: 4.5; opacity: 1; animation: nowp 1.4s ease-in-out infinite; }
+.wall path:hover { stroke-width: 5; }
+.wall .gap { width: 100%; height: 0; display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.wall-break { flex-basis: 100%; display: flex; align-items: center; gap: 12px; color: var(--chalk-dim); font-family: var(--f-mono); font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; padding: 6px 0; }
+.wall-break::before, .wall-break::after { content: ""; height: 1px; flex: 1; background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 12px); }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes nowp { 50% { opacity: .35; } }
+.wall-key { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; font-size: 13px; color: var(--chalk-dim); }
+.wall-key i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+
+/* Term track */
+.track { display: flex; height: 54px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); position: relative; }
+.track .seg { position: relative; min-width: 0; display: flex; align-items: center; padding: 0 8px; font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--on-color); font-weight: 600; border-right: 1px solid var(--board-2); }
+.track .seg.class { background: var(--cls); }
+.track .seg.exam { background: var(--exam); }
+.track .seg.place { background: var(--place); }
+.track .seg.brk { background: repeating-linear-gradient(135deg, var(--board-3) 0 6px, var(--board-2) 6px 12px); color: var(--chalk-dim); }
+.track .past { position: absolute; inset: 0 auto 0 0; background: rgba(248,249,251,.68); pointer-events: none; border-right: 0; }
+.track .you { position: absolute; top: -8px; bottom: -8px; width: 4px; background: var(--hi-ink); border-radius: 2px; box-shadow: 0 0 0 4px rgba(255,216,74,.55); }
+.track-wrap { position: relative; padding-top: 30px; }
+.you-label { position: absolute; top: 0; transform: translateX(-50%); font-family: var(--f-mono); font-size: 11px; font-weight: 600; color: var(--chalk); background: var(--hi); padding: 1px 7px; border-radius: 4px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.track-dates { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--f-mono); font-size: 11.5px; color: var(--chalk-dim); }
+
+/* Heatmap */
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 99px; border: 1px solid var(--line); background: var(--board-2); color: var(--chalk); font: 500 13px var(--f-body); }
+button.chip { cursor: pointer; }
+button.chip:hover { border-color: var(--chalk-dim); }
+button.chip[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+.chip i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.chip.reset { margin-left: auto; color: var(--chalk-dim); }
+.months { display: grid; grid-template-columns: repeat(auto-fill, minmax(206px, 1fr)); gap: 14px; }
+.month { background: var(--board-2); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 12px; min-width: 0; }
+.month.cur { border-color: var(--hi-ink); box-shadow: 0 0 0 3px rgba(255,216,74,.45); }
+.mhead { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 10px; }
+.mhead strong { font-family: var(--f-display); font-weight: 800; font-size: 22px; text-transform: uppercase; letter-spacing: .02em; line-height: 1; }
+.mhead span { font-family: var(--f-mono); font-size: 11px; color: var(--chalk-dim); white-space: nowrap; }
+.mhead span b { color: var(--chalk); }
+.mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.mgrid .wd { font-family: var(--f-mono); font-size: 10px; color: var(--chalk-dim); text-align: center; padding-bottom: 2px; }
+.cell { aspect-ratio: 1; width: 100%; max-width: 100%; border-radius: 6px; border: 0; padding: 0; background: transparent; position: relative; cursor: default;
+  font: 500 12px/1 var(--f-mono); font-variant-numeric: tabular-nums; color: var(--chalk-dim); display: grid; place-items: center; -webkit-tap-highlight-color: transparent; }
+.cell.clickable { cursor: pointer; }
+.cell.clickable:hover { outline: 2px solid var(--chalk); outline-offset: 1px; z-index: 2; }
+.cell:focus-visible { outline: 2px solid var(--hi-ink); outline-offset: 1px; }
+.cell.class { background: var(--cls); color: var(--on-color); }
+.cell.exam { background: var(--exam); color: var(--on-color); }
+.cell.place { background: var(--place); color: var(--on-color); }
+.cell.holiday { background: var(--off); color: var(--on-color); }
+.cell.weekend { background: transparent; box-shadow: inset 0 0 0 1px var(--line); }
+.cell.brk { background: repeating-linear-gradient(135deg, var(--board-3) 0 3px, transparent 3px 6px); box-shadow: inset 0 0 0 1px var(--line); }
+.cell.none { opacity: .35; }
+.cell.blank { visibility: hidden; }
+.cell.pastd { opacity: .28; }
+.cell.uoff { background: var(--board-2) !important; color: var(--off) !important; box-shadow: inset 0 0 0 2px var(--off); opacity: 1; }
+.cell.uoff::after { content: ""; position: absolute; inset: 22%; background: linear-gradient(45deg, transparent 45%, var(--off) 45% 55%, transparent 55%), linear-gradient(-45deg, transparent 45%, var(--off) 45% 55%, transparent 55%); opacity: .55; }
+.cell.uon { box-shadow: inset 0 0 0 2px var(--hi-ink); background: var(--hi); color: var(--chalk); opacity: 1; }
+.cell.today { box-shadow: 0 0 0 2px var(--board-2), 0 0 0 4px var(--hi-ink); opacity: 1; z-index: 1; font-weight: 700; }
+.cell.catoff { opacity: .2; }
+.heat-note { color: var(--chalk-dim); font-size: 13px; margin-top: 10px; }
+.swipe-hint { display: none; }
+.tip { position: fixed; z-index: 50; pointer-events: none; background: var(--chalk); color: var(--board-2); padding: 7px 10px; border-radius: 8px; font-size: 12.5px; line-height: 1.35; max-width: 240px; box-shadow: 0 8px 24px rgba(22,26,34,.22); }
+.tip b { display: block; font-family: var(--f-mono); font-size: 11px; letter-spacing: .04em; }
+
+/* Bottom grid */
+.duo { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px 40px; }
+.up { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
+.up li { display: grid; grid-template-columns: 74px minmax(0,1fr) auto; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.up li:first-child { border-top: 1px solid var(--line); }
+.up .d { font-family: var(--f-mono); font-size: 12px; color: var(--chalk-dim); line-height: 1.25; }
+.up .d b { display: block; color: var(--chalk); font-size: 15px; font-weight: 600; }
+.up .what { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.up .what i { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--chalk-dim); }
+.up .what i.exam { background: var(--exam); } .up .what i.place { background: var(--place); } .up .what i.off { background: var(--off); } .up .what i.big { background: var(--hi); }
+.up .in { font-family: var(--f-mono); font-size: 12px; color: var(--chalk-dim); text-align: right; white-space: nowrap; }
+.up .in b { color: var(--chalk); font-weight: 600; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--board-2); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.stat b { font-family: var(--f-display); font-weight: 800; font-size: 46px; line-height: 1; display: block; font-variant-numeric: tabular-nums; }
+.stat span { color: var(--chalk-dim); font-size: 13px; }
+.stat.hl { background: var(--hi); border-color: var(--hi-ink); }
+.stat.hl span { color: var(--chalk); }
+
+footer { border-top: 1px solid var(--line); padding-top: 18px; color: var(--chalk-dim); font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+footer p { margin: 0; max-width: 90ch; }
+footer b { color: var(--chalk); font-weight: 500; }
+
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 40; }
+
+@media (max-width: 860px) {
+  .hero, .duo { grid-template-columns: minmax(0, 1fr); }
+  .wrap { gap: 44px; }
+}
+@media (max-width: 600px) {
+  body { font-size: 14.5px; }
+  .wrap { gap: 40px; padding-block: 14px 48px; }
+  .top { padding-bottom: 10px; }
+  .top .eyebrow { font-size: 10.5px; }
+  .big { font-size: min(52vw, 230px); margin-top: 0; }
+  .count-label { margin-top: 6px; }
+  .mood { font-size: 16px; }
+  .side { gap: 10px; }
+  .card { padding: 14px 16px; }
+  .ring { width: 76px; height: 76px; }
+  .served .n { font-size: 26px; }
+  .clock { gap: 6px; justify-content: space-between; }
+  .clock b { font-size: 26px; }
+  h2 { font-size: 30px; }
+  .sec-head { margin-bottom: 14px; }
+  .sec-head p { font-size: 13.5px; }
+  .wall { padding: 14px 10px; gap: 6px 6px; justify-content: center; }
+  .wall svg { width: 36px; height: 35px; }
+  .track { height: 40px; }
+  .track .seg { font-size: 0; padding: 0; }
+  .legend { flex-wrap: nowrap; overflow-x: auto; margin-inline: -16px; padding: 0 16px 4px; scrollbar-width: none; }
+  .legend::-webkit-scrollbar { display: none; }
+  .chip { flex: none; padding: 7px 12px; }
+  .chip.reset { margin-left: 0; }
+  /* months become a swipeable row of big, tappable cards */
+  .months { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 12px; margin-inline: -16px; padding: 4px 16px 10px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .months::-webkit-scrollbar { display: none; }
+  .month { flex: 0 0 86%; scroll-snap-align: center; padding: 16px; }
+  .mhead strong { font-size: 26px; }
+  .mgrid { gap: 5px; }
+  .cell { font-size: 13.5px; border-radius: 8px; }
+  .swipe-hint { display: block; font-family: var(--f-mono); font-size: 11.5px; color: var(--chalk-dim); text-align: center; margin-top: 4px; }
+  .up li { grid-template-columns: 58px minmax(0,1fr); gap: 4px 12px; }
+  .up .in { grid-column: 2; text-align: left; }
+  .up .in br { display: none; }
+  .up .in .sep2::before { content: " · "; }
+  .stat { padding: 14px; }
+  .stat b { font-size: 38px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .wall .served { stroke-dashoffset: 0; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="fx"></canvas>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Second year · Modules V–VII · Academic Calendar 2026–27</div>
+    <div class="today" id="todayLine"></div>
+  </header>
+
+  <section class="hero">
+    <div class="count-block">
+      <div class="eyebrow">College days left</div>
+      <button class="big" id="big" aria-label="College days left" title="Tap for a celebration"></button>
+      <div class="count-label">
+        <strong id="countWord">days of college</strong>
+        <span id="countSub"></span>
+      </div>
+      <p class="mood" id="mood"></p>
+      <div class="tap-hint">Weekends, holidays and the winter break are already removed.</div>
+    </div>
+    <div class="side">
+      <div class="card served">
+        <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="bg" cx="50" cy="50" r="42"></circle>
+          <circle class="fg" id="ringFg" cx="50" cy="50" r="42"></circle>
+          <text id="ringTxt" x="50" y="58" text-anchor="middle">0%</text>
+        </svg>
+        <div class="txt">
+          <div class="eyebrow">Served so far</div>
+          <div class="n" id="servedN"></div>
+          <div class="eyebrow" id="servedSub" style="margin-top:4px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Last exam ends · Sat 6 Mar 2027, 5 PM</div>
+        <div class="clock" id="clock"></div>
+      </div>
+      <div class="card next-off" id="nextOff"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>The wall</h2>
+      <p>One chalk mark for every college day of second year. Solid marks are done. Dotted ones are still coming. Hover a mark to see its date.</p>
+    </div>
+    <div class="wall" id="wall"></div>
+    <div class="wall-key">
+      <span><i style="background:var(--chalk)"></i>Done</span>
+      <span><i style="background:var(--hi)"></i>Today</span>
+      <span><i style="background:var(--chalk-dim)"></i>Class day left</span>
+      <span><i style="background:var(--exam)"></i>Exam day left</span>
+      <span><i style="background:var(--place)"></i>Placement day left</span>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Where you are</h2>
+      <p id="trackSub"></p>
+    </div>
+    <div class="track-wrap" id="trackWrap"></div>
+    <div class="track-dates"><span>15 Jun 2026</span><span>6 Mar 2027</span></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>Every day, Jun → Mar</h2>
+      <p>Tap a college day to mark it off (leave, sick day, bunk). Tap a weekend or holiday to add it back (Saturday exam, extra class). Your marks stay in this browser.</p>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="months" id="heat"></div>
+    <div class="swipe-hint">Swipe for more months</div>
+    <div class="heat-note" id="heatNote"></div>
+  </section>
+
+  <section class="duo">
+    <div>
+      <div class="sec-head"><h2>Coming up</h2></div>
+      <ul class="up" id="up"></ul>
+    </div>
+    <div>
+      <div class="sec-head"><h2>By the numbers</h2></div>
+      <div class="stats" id="stats"></div>
+    </div>
+  </section>
+
+  <footer>
+    <p><b>How the count works.</b> A day counts if it falls in a second-year session (Module V, VI, VII), an exam week or a placement week, and it is a Monday to Friday. Removed: every Saturday and Sunday, the holidays listed in the calendar (Ganesh Chaturthi, Dussehra, Institute Holiday after Diwali, Republic Day, Saraswati Puja, Shivaji Maharaj Jayanti), the national holidays the calendar leaves out (Gandhi Jayanti, Guru Nanak Jayanti), and the winter break from 6 Dec to 3 Jan.</p>
+    <p>The count drops by one at midnight on each college day. Today counts until midnight. Saturday exam days (5 Dec, 6 Mar) are not counted; tap them in the calendar to add them.</p>
+  </footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(() => {
+  // ---------- Calendar data (from Academic Calendar 2026–27, 2nd year column) ----------
+  const START = '2026-06-15', END = '2027-03-07';       // heatmap range: Mon → Sun, 38 weeks
+  const CAMPUS = [['2026-06-15', '2026-12-05'], ['2027-01-04', '2027-03-06']];
+  const BREAK = ['2026-12-06', '2027-01-03'];
+  const EXAMS = [
+    ['2026-07-16', '2026-07-18', 'Mid Term · Module V'],
+    ['2026-08-24', '2026-08-29', 'End Term · Module V'],
+    ['2026-10-08', '2026-10-10', 'Mid Term · Module VI'],
+    ['2026-11-30', '2026-12-05', 'End Term · Module VI'],
+    ['2027-02-04', '2027-02-06', 'Mid Term · Module VII'],
+    ['2027-03-01', '2027-03-06', 'End Term · Module VII'],
+  ];
+  const PLACE = [
+    ['2026-11-21', '2026-11-28', 'Lateral Recruitment Process (LRP)'],
+    ['2027-01-16', '2027-01-19', 'Campus Recruitment Process (CRP)'],
+  ];
+  const HOLIDAYS = {
+    '2026-08-15': 'Independence Day',
+    '2026-09-14': 'Ganesh Chaturthi',
+    '2026-10-02': 'Gandhi Jayanti',
+    '2026-10-20': 'Dussehra',
+    '2026-11-08': 'Diwali',
+    '2026-11-09': 'Institute Holiday (Diwali)',
+    '2026-11-24': 'Guru Nanak Jayanti',
+    '2026-12-25': 'Christmas',
+    '2027-01-26': 'Republic Day',
+    '2027-02-11': 'Saraswati Puja',
+    '2027-02-19': 'Chhatrapati Shivaji Maharaj Jayanti',
+  };
+  const NOTES = [
+    ['2026-07-18', '2026-07-18', 'Re-Exam · Module III'],
+    ['2026-08-03', '2026-08-08', 'Surprise test · Module V'],
+    ['2026-08-10', '2026-08-14', 'Capstone presentations'],
+    ['2026-08-12', '2026-08-18', 'Anti-Ragging Week'],
+    ['2026-08-29', '2026-09-04', 'Fit India Week'],
+    ['2026-09-07', '2026-09-08', 'Module V answer sheets & CE marks'],
+    ['2026-09-16', '2026-09-16', 'Module V results'],
+    ['2026-10-10', '2026-10-10', 'Re-Exam · Module V'],
+    ['2026-10-14', '2026-10-15', 'Mid-term VI answer sheets shown'],
+    ['2026-10-26', '2026-11-01', 'Vigilance Awareness Week'],
+    ['2026-10-31', '2026-10-31', 'Rashtriya Ekta Diwas · Unity Run'],
+    ['2026-11-02', '2026-11-06', 'Surprise test · Module VI'],
+    ['2026-11-12', '2026-11-13', 'Surprise test VI marks shown'],
+    ['2026-11-14', '2026-11-14', 'Sansmaran'],
+    ['2026-11-19', '2026-11-20', 'Faculty feedback · Module VI'],
+    ['2026-11-26', '2026-11-26', 'Samvidhan Diwas'],
+    ['2026-12-06', '2026-12-12', 'Avartan'],
+    ['2026-12-21', '2026-12-21', 'Module VI results'],
+    ['2027-02-06', '2027-02-06', 'Re-Exam · Module VI'],
+    ['2027-02-15', '2027-02-20', 'Surprise test · Module VII'],
+    ['2027-02-25', '2027-02-26', 'Faculty feedback · Module VII'],
+    ['2027-03-20', '2027-03-20', 'Module VII results'],
+  ];
+  const MILESTONES = [
+    ['2026-10-14', 'Mid-term VI answer sheets shown', ''],
+    ['2026-10-20', 'Dussehra · holiday', 'off'],
+    ['2026-11-02', 'Surprise test · Module VI (2–6 Nov)', 'exam'],
+    ['2026-11-08', 'Diwali', 'off'],
+    ['2026-11-09', 'Institute holiday', 'off'],
+    ['2026-11-20', 'Last class of Module VI', ''],
+    ['2026-11-21', 'Lateral Recruitment Process (21–28 Nov)', 'place'],
+    ['2026-11-24', 'Guru Nanak Jayanti · holiday', 'off'],
+    ['2026-11-30', 'End Term · Module VI (30 Nov–5 Dec)', 'exam'],
+    ['2026-12-06', 'Winter break starts · Avartan (6–12 Dec)', 'off'],
+    ['2026-12-21', 'Module VI results', ''],
+    ['2027-01-04', 'Module VII begins. The last module.', 'big'],
+    ['2027-01-16', 'Campus Recruitment Process (16–19 Jan)', 'place'],
+    ['2027-01-26', 'Republic Day · holiday', 'off'],
+    ['2027-02-04', 'Mid Term · Module VII (4–6 Feb)', 'exam'],
+    ['2027-02-11', 'Saraswati Puja · holiday', 'off'],
+    ['2027-02-15', 'Surprise test · Module VII (15–20 Feb)', 'exam'],
+    ['2027-02-19', 'Shivaji Maharaj Jayanti · holiday', 'off'],
+    ['2027-02-27', 'Last class. Ever.', 'big'],
+    ['2027-03-01', 'End Term · Module VII (1–6 Mar)', 'exam'],
+    ['2027-03-06', 'Last paper. You are free.', 'big'],
+    ['2027-03-20', 'Module VII results', ''],
+    ['2027-04-03', 'Convocation', 'big'],
+  ];
+  const TRACK = [
+    ['2026-06-15', 'class', 'Module V'],
+    ['2026-08-24', 'exam', 'End V'],
+    ['2026-08-31', 'class', 'Module VI'],
+    ['2026-11-21', 'place', 'LRP'],
+    ['2026-11-30', 'exam', 'End VI'],
+    ['2026-12-06', 'brk', 'Winter break'],
+    ['2027-01-04', 'class', 'Module VII'],
+    ['2027-03-01', 'exam', 'End VII'],
+  ];
+  const TRACK_END = '2027-03-07';
+  const FREEDOM = new Date('2027-03-06T17:00:00+05:30');
+
+  // ---------- Date helpers (keys are YYYY-MM-DD, math in UTC) ----------
+  const DAY = 864e5;
+  const pad = n => String(n).padStart(2, '0');
+  const toD = k => new Date(k + 'T00:00:00Z');
+  const toK = d => d.toISOString().slice(0, 10);
+  const addD = (k, n) => toK(new Date(toD(k).getTime() + n * DAY));
+  const diffD = (a, b) => Math.round((toD(b) - toD(a)) / DAY);
+  const dow = k => toD(k).getUTCDay();
+  const inR = (k, a, b) => k >= a && k <= b;
+  const localToday = () => { const n = new Date(); return `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`; };
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const fmt = k => { const d = toD(k); return `${WD[d.getUTCDay()]} ${d.getUTCDate()} ${MON[d.getUTCMonth()]}`; };
+  const fmtY = k => { const d = toD(k); return `${d.getUTCDate()} ${MON[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+  const allDays = [];
+  for (let k = START; k <= END; k = addD(k, 1)) allDays.push(k);
+
+  // ---------- State (per-viewer, browser only) ----------
+  const LS = 'dtf-v1';
+  let state = { overrides: {}, cats: { exam: true, place: true } };
+  try { const s = JSON.parse(localStorage.getItem(LS)); if (s && s.overrides) state = { overrides: s.overrides, cats: Object.assign({ exam: true, place: true }, s.cats) }; } catch (e) {}
+  const save = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} };
+
+  // ---------- Day classification ----------
+  function info(k) {
+    const notes = NOTES.filter(n => inR(k, n[0], n[1])).map(n => n[2]);
+    const ex = EXAMS.find(e => inR(k, e[0], e[1]));
+    const pl = PLACE.find(p => inR(k, p[0], p[1]));
+    if (ex) notes.unshift(ex[2]);
+    if (pl) notes.unshift(pl[2]);
+    const hol = HOLIDAYS[k];
+    if (hol) notes.unshift(hol);
+    const campus = CAMPUS.some(c => inR(k, c[0], c[1]));
+    const brk = inR(k, BREAK[0], BREAK[1]);
+    const wd = dow(k);
+    let type, cat = 'class';
+    if (ex) cat = 'exam'; else if (pl) cat = 'place';
+    if (brk) type = 'brk';
+    else if (!campus) type = 'none';
+    else if (wd === 0 || wd === 6) type = 'weekend';
+    else if (hol) type = 'holiday';
+    else type = cat;
+    let base = (type === 'class') || (type === 'exam' && state.cats.exam) || (type === 'place' && state.cats.place);
+    const ov = state.overrides[k];
+    const counted = ov === 'off' ? false : ov === 'on' ? true : base;
+    return { k, type, cat, notes, counted, ov, base, editable: type !== 'none', catOff: (type === 'exam' && !state.cats.exam) || (type === 'place' && !state.cats.place) };
+  }
+
+  // ---------- Render ----------
+  let today = localToday();
+  let firstPaint = true;
+  const $ = id => document.getElementById(id);
+
+  function compute() {
+    const days = allDays.map(info);
+    const college = days.filter(d => d.counted);
+    const served = college.filter(d => d.k < today);
+    const left = college.filter(d => d.k >= today);
+    return { days, college, served, left };
+  }
+
+  function renderBig(total, remaining) {
+    const big = $('big');
+    const len = Math.max(String(total).length, String(remaining).length);
+    const digitsOf = n => String(n).padStart(len, ' ').split('');
+    if (big.children.length !== len) {
+      big.innerHTML = '';
+      for (let i = 0; i < len; i++) {
+        const d = document.createElement('span');
+        d.className = 'digit';
+        const s = document.createElement('span');
+        s.className = 'strip';
+        s.innerHTML = '0123456789'.split('').map(c => `<span>${c}</span>`).join('');
+        d.appendChild(s); big.appendChild(d);
+      }
+    }
+    const set = n => {
+      digitsOf(n).forEach((c, i) => {
+        const col = big.children[i];
+        const ghost = c === ' ';
+        col.classList.toggle('ghost', ghost);
+        col.style.width = ghost ? '0px' : '';
+        col.firstChild.style.transform = `translateY(-${ghost ? 0 : +c}em)`;
+        col.firstChild.style.transitionDelay = `${(len - 1 - i) * 0.12}s`;
+      });
+      big.setAttribute('aria-label', `${n} college days left`);
+    };
+    if (firstPaint) {
+      set(total);
+      requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => set(remaining), 250)));
+    } else set(remaining);
+  }
+
+  function mood(rem, pct) {
+    if (rem === 0) return 'Done. Every mark is on the wall. Go touch grass.';
+    if (rem <= 5) return 'Single digits and falling. Do not get an attendance shortage now.';
+    if (rem <= 10) return 'Ten or fewer. You can count these on your fingers.';
+    if (rem <= 25) return 'Under twenty-five. Start planning the farewell.';
+    if (rem <= 50) return 'Under fifty. The end is a real date on the calendar now.';
+    if (pct >= 50) return `Past halfway. ${Math.round(pct)}% of second year is already chalked off.`;
+    return 'Long road ahead. Pace your leaves.';
+  }
+
+  function seeded(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return () => { h += 0x6D2B79F5; let t = h; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  }
+
+  function renderWall(college) {
+    const wall = $('wall');
+    wall.innerHTML = '';
+    let svg = null, slot = 0, prev = null, drawIdx = 0;
+    const NS = 'http://www.w3.org/2000/svg';
+    const newGroup = () => { svg = document.createElementNS(NS, 'svg'); svg.setAttribute('viewBox', '0 0 46 44'); wall.appendChild(svg); slot = 0; };
+    college.forEach(d => {
+      if (prev && prev < BREAK[0] && d.k > BREAK[1]) {
+        const b = document.createElement('div');
+        b.className = 'wall-break'; b.textContent = 'Winter break · 6 Dec – 3 Jan';
+        wall.appendChild(b); svg = null;
+      }
+      if (!svg || slot === 5) newGroup();
+      const r = seeded(d.k);
+      const j = (a) => (r() - .5) * a;
+      let p;
+      if (slot < 4) {
+        const x = 8 + slot * 9.5 + j(2);
+        p = `M${x + j(1.5)} ${5 + j(3)} Q${x + j(4)} ${21 + j(2)} ${x + j(2)} ${38 + j(3)}`;
+      } else {
+        p = `M${1 + j(2)} ${31 + j(4)} Q${22 + j(4)} ${22 + j(4)} ${45 + j(2)} ${11 + j(4)}`;
+      }
+      const path = document.createElementNS(NS, 'path');
+      path.setAttribute('d', p);
+      path.setAttribute('pathLength', '1');
+      let cls;
+      if (d.k < today) { cls = 'served'; path.style.animationDelay = firstPaint ? `${drawIdx++ * 0.012}s` : '0s'; }
+      else if (d.k === today) cls = 'now';
+      else cls = `left t-${d.cat}`;
+      path.setAttribute('class', cls);
+      const t = document.createElementNS(NS, 'title');
+      t.textContent = `${fmt(d.k)}${d.notes.length ? ' · ' + d.notes.join(', ') : ''}${d.k === today ? ' · today' : ''}`;
+      path.appendChild(t);
+      svg.appendChild(path);
+      slot++; prev = d.k;
+    });
+  }
+
+  function renderTrack() {
+    const wrap = $('trackWrap');
+    const span = diffD(TRACK[0][0], TRACK_END);
+    const segs = TRACK.map((s, i) => {
+      const end = i + 1 < TRACK.length ? TRACK[i + 1][0] : TRACK_END;
+      return `<div class="seg ${s[1]}" style="flex:${diffD(s[0], end)} 1 0" title="${s[2]} · from ${fmt(s[0])}">${s[2]}</div>`;
+    }).join('');
+    const pos = Math.max(0, Math.min(1, diffD(TRACK[0][0], today) / span));
+    const label = pos >= 1 ? 'Finished' : 'You are here';
+    wrap.innerHTML = `<div class="you-label" style="left:clamp(48px, ${pos * 100}%, calc(100% - 48px))">${label}</div>
+      <div class="track">${segs}<div class="past" style="width:${pos * 100}%"></div><div class="you" style="left:calc(${pos * 100}% - 1.5px)"></div></div>`;
+    const cur = [...TRACK].reverse().find(s => s[0] <= today);
+    const calLeft = diffD(today, '2027-03-06');
+    $('trackSub').textContent = cur
+      ? `Now in ${cur[2] === 'Winter break' ? 'the winter break' : cur[2]}. ${calLeft > 0 ? `${calLeft} calendar days until the last paper.` : 'Second year is over.'}`
+      : `Second year starts ${fmtY(TRACK[0][0])}.`;
+  }
+
+  function renderLegend() {
+    const L = $('legend');
+    L.innerHTML = `
+      <span class="chip"><i style="background:var(--chalk)"></i>Class day</span>
+      <button class="chip" data-cat="exam" aria-pressed="${state.cats.exam}"><i style="background:var(--exam)"></i>Exam days</button>
+      <button class="chip" data-cat="place" aria-pressed="${state.cats.place}"><i style="background:var(--place)"></i>Placement weeks</button>
+      <span class="chip"><i style="background:var(--off)"></i>Holiday</span>
+      <span class="chip"><i style="box-shadow:inset 0 0 0 1px var(--line)"></i>Weekend</span>
+      <span class="chip"><i style="background:repeating-linear-gradient(135deg,var(--board-3) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--line)"></i>Winter break</span>
+      <button class="chip reset" id="reset">Clear my marks</button>`;
+    L.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => {
+      state.cats[b.dataset.cat] = !state.cats[b.dataset.cat]; save(); render();
+    });
+    $('reset').onclick = () => { state = { overrides: {}, cats: { exam: true, place: true } }; save(); render(); };
+  }
+
+  let heatScrolled = false;
+  function renderHeat() {
+    const H = $('heat');
+    const keep = H.scrollLeft;
+    let html = '';
+    const curM = today.slice(0, 7);
+    for (let m0 = '2026-06-01'; m0 <= '2027-03-01'; ) {
+      const d0 = toD(m0), y = d0.getUTCFullYear(), mo = d0.getUTCMonth();
+      const next = toK(new Date(Date.UTC(y, mo + 1, 1)));
+      const ds = [];
+      for (let k = m0; k < next; k = addD(k, 1)) ds.push(info(k));
+      const nLeft = ds.filter(d => d.counted && d.k >= today).length;
+      const nAll = ds.filter(d => d.counted).length;
+      const cur = m0.slice(0, 7) === curM;
+      html += `<div class="month${cur ? ' cur' : ''}" data-m="${m0.slice(0, 7)}"><div class="mhead"><strong>${MON[mo]} ${y}</strong><span>${nLeft ? `<b>${nLeft}</b> left · ` : ''}${nAll} days</span></div><div class="mgrid">`;
+      html += ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(w => `<span class="wd">${w}</span>`).join('');
+      for (let b = 0; b < (dow(m0) + 6) % 7; b++) html += '<span class="cell blank"></span>';
+      ds.forEach(d => {
+        const cls = ['cell', d.type];
+        if (d.editable) cls.push('clickable');
+        if (d.k < today && d.type !== 'none') cls.push('pastd');
+        if (d.ov === 'off' && d.base) cls.push('uoff');
+        if (d.ov === 'on' && !d.base) cls.push('uon');
+        if (d.catOff && !d.ov) cls.push('catoff');
+        if (d.k === today) cls.push('today');
+        html += `<button class="${cls.join(' ')}" data-k="${d.k}" aria-label="${fmt(d.k)}${d.counted ? ', counted' : ', not counted'}" ${d.editable ? '' : 'tabindex="-1"'}>${toD(d.k).getUTCDate()}</button>`;
+      });
+      html += '</div></div>';
+      m0 = next;
+    }
+    H.innerHTML = html;
+    if (!heatScrolled) {
+      heatScrolled = true;
+      requestAnimationFrame(() => {
+        const c = H.querySelector('.month.cur');
+        if (c && H.scrollWidth > H.clientWidth) H.scrollLeft = c.offsetLeft - (H.clientWidth - c.offsetWidth) / 2;
+      });
+    } else H.scrollLeft = keep;
+    const marks = Object.keys(state.overrides).length;
+    $('heatNote').textContent = marks ? `You have ${marks} personal mark${marks > 1 ? 's' : ''} on the calendar. They are already included in the count.` : 'No personal marks yet.';
+  }
+
+  const tip = $('tip');
+  $('heat').addEventListener('click', e => {
+    const b = e.target.closest('.cell'); if (!b) return;
+    const d = info(b.dataset.k); if (!d.editable) return;
+    if (d.ov) delete state.overrides[d.k];
+    else state.overrides[d.k] = d.base ? 'off' : 'on';
+    save(); render();
+    const nb = $('heat').querySelector(`[data-k="${d.k}"]`);
+    if (nb) { showTip(nb); clearTimeout(tipT); tipT = setTimeout(() => tip.hidden = true, 2200); }
+  });
+  let tipT;
+  function showTip(b) {
+    const d = info(b.dataset.k);
+    const state_ = d.ov === 'off' ? 'Marked off by you' : d.ov === 'on' ? 'Added by you' : d.counted ? 'Counts as a college day' : ({ weekend: 'Weekend', holiday: 'Holiday', brk: 'Winter break', none: 'Not in session' }[d.type] || 'Not counted');
+    tip.innerHTML = `<b>${fmt(d.k)} ${toD(d.k).getUTCFullYear()}</b>${state_}${d.notes.length ? '<br>' + d.notes.join(' · ') : ''}`;
+    tip.hidden = false;
+    const r = b.getBoundingClientRect();
+    const tw = tip.offsetWidth;
+    tip.style.left = Math.max(8, Math.min(innerWidth - tw - 8, r.left + r.width / 2 - tw / 2)) + 'px';
+    tip.style.top = (r.top - tip.offsetHeight - 8 < 8 ? r.bottom + 8 : r.top - tip.offsetHeight - 8) + 'px';
+  }
+  $('heat').addEventListener('pointerover', e => { const b = e.target.closest('.cell'); if (b && b.dataset.k && e.pointerType === 'mouse') showTip(b); });
+  $('heat').addEventListener('scroll', () => tip.hidden = true, { passive: true });
+  $('heat').addEventListener('pointerleave', () => tip.hidden = true);
+  $('heat').addEventListener('focusin', e => { const b = e.target.closest('.cell'); if (b) showTip(b); });
+  $('heat').addEventListener('focusout', () => tip.hidden = true);
+  addEventListener('scroll', () => tip.hidden = true, { passive: true });
+
+  function renderSide(c) {
+    const total = c.college.length, servedN = c.served.length, rem = c.left.length;
+    const pct = total ? servedN / total * 100 : 0;
+    const C = 2 * Math.PI * 42;
+    const fg = $('ringFg');
+    fg.style.strokeDasharray = C;
+    if (firstPaint) { fg.style.strokeDashoffset = C; requestAnimationFrame(() => requestAnimationFrame(() => fg.style.strokeDashoffset = C * (1 - pct / 100))); }
+    else fg.style.strokeDashoffset = C * (1 - pct / 100);
+    $('ringTxt').textContent = Math.round(pct) + '%';
+    $('servedN').innerHTML = `${servedN} <em>/ ${total} days</em>`;
+    $('servedSub').textContent = `${rem} to go`;
+
+    // next day off
+    let nk = null, label = '';
+    for (let k = addD(today, 1); k <= '2027-03-06'; k = addD(k, 1)) {
+      const d = info(k);
+      if (d.type === 'weekend' || d.type === 'none') continue;
+      if (!d.counted) { nk = k; label = d.ov === 'off' ? 'Your day off' : d.type === 'brk' ? 'Winter break' : (HOLIDAYS[k] || 'Day off'); break; }
+    }
+    const no = $('nextOff');
+    if (nk) {
+      const between = c.left.filter(d => d.k > today && d.k < nk).length;
+      const dd = toD(nk);
+      no.innerHTML = `<div class="badge"><div><b>${dd.getUTCDate()}</b><small>${MON[dd.getUTCMonth()]}</small></div></div>
+        <div class="t"><div class="eyebrow">Next weekday off</div><strong>${label}</strong><span>${fmt(nk)} · ${between === 0 ? 'right after today' : `${between} college day${between > 1 ? 's' : ''} before it`}</span></div>`;
+    } else {
+      no.innerHTML = `<div class="badge"><div><b>∞</b><small>off</small></div></div><div class="t"><div class="eyebrow">Next weekday off</div><strong>All of them</strong><span>No more college days on the calendar.</span></div>`;
+    }
+
+    // top bar
+    const td = info(today);
+    const idx = c.college.findIndex(d => d.k === today);
+    const status = td.counted
+      ? `<span class="pill on">College day</span><span>day ${idx + 1} of ${total}</span>`
+      : `<span class="pill offd">${td.type === 'weekend' ? 'Weekend' : td.type === 'holiday' ? HOLIDAYS[today] : td.type === 'brk' ? 'Winter break' : td.ov === 'off' ? 'Your day off' : 'No college'}</span><span>not counted</span>`;
+    $('todayLine').innerHTML = `<span>${fmt(today)} ${toD(today).getUTCFullYear()}</span>${status}`;
+
+    $('countWord').textContent = rem === 1 ? 'day of college' : 'days of college';
+    $('countSub').textContent = td.counted ? 'including today' : `starting ${c.left[0] ? fmt(c.left[0].k) : '—'}`;
+    $('mood').textContent = mood(rem, pct);
+    return { total, rem, pct };
+  }
+
+  function renderUp(c) {
+    const list = MILESTONES.filter(m => m[0] > today).slice(0, 7);
+    $('up').innerHTML = list.length ? list.map(m => {
+      const cal = diffD(today, m[0]);
+      const col = c.left.filter(d => d.k > today && d.k < m[0]).length;
+      const dd = toD(m[0]);
+      return `<li><div class="d"><b>${dd.getUTCDate()} ${MON[dd.getUTCMonth()]}</b>${WD[dd.getUTCDay()]}</div>
+        <div class="what"><i class="${m[2]}"></i><span>${m[1]}</span></div>
+        <div class="in">in <b>${cal}</b> day${cal > 1 ? 's' : ''}<br><span class="sep2">${col} college day${col === 1 ? '' : 's'} away</span></div></li>`;
+    }).join('') : '<li><div class="d"><b>—</b></div><div class="what">Nothing left on the calendar.</div></li>';
+  }
+
+  function renderStats(c) {
+    const left = c.left;
+    const mondays = left.filter(d => dow(d.k) === 1).length;
+    const fridays = left.filter(d => dow(d.k) === 5).length;
+    const exams = left.filter(d => d.cat === 'exam').length;
+    let sats = 0; for (let k = today; k < '2027-03-06'; k = addD(k, 1)) if (dow(k) === 6) sats++;
+    let hols = 0; for (let k = addD(today, 1); k <= '2027-03-06'; k = addD(k, 1)) { const d = info(k); if (d.type === 'holiday' || (d.ov === 'off' && d.base)) hols++; }
+    const weeks = (left.length / 5).toFixed(1);
+    $('stats').innerHTML = [
+      [weeks, 'five-day weeks of college left', true],
+      [mondays, 'Mondays still to survive'],
+      [fridays, 'Fridays left to look forward to'],
+      [exams, 'exam days left'],
+      [sats, 'weekends before the last paper'],
+      [hols, 'weekday holidays still ahead'],
+    ].map(s => `<div class="stat${s[2] ? ' hl' : ''}"><b>${s[0]}</b><span>${s[1]}</span></div>`).join('');
+  }
+
+  function render() {
+    today = localToday();
+    const c = compute();
+    renderBig(c.college.length, c.left.length);
+    renderSide(c);
+    renderWall(c.college);
+    renderTrack();
+    renderLegend();
+    renderHeat();
+    renderUp(c);
+    renderStats(c);
+    if (firstPaint && c.left.length === 0) setTimeout(() => burst(innerWidth / 2, innerHeight / 3, 220), 1800);
+    firstPaint = false;
+  }
+
+  // ---------- Freedom clock ----------
+  const clock = $('clock');
+  clock.innerHTML = ['d', 'h', 'm', 's'].map((u, i) => `${i ? '<span class="sep">:</span>' : ''}<div><b id="c${u}">0</b><small>${{ d: 'days', h: 'hrs', m: 'min', s: 'sec' }[u]}</small></div>`).join('');
+  function tick() {
+    let ms = Math.max(0, FREEDOM - Date.now());
+    const d = Math.floor(ms / DAY); ms -= d * DAY;
+    const h = Math.floor(ms / 36e5); ms -= h * 36e5;
+    const m = Math.floor(ms / 6e4); ms -= m * 6e4;
+    const s = Math.floor(ms / 1e3);
+    $('cd').textContent = d; $('ch').textContent = pad(h); $('cm').textContent = pad(m); $('cs').textContent = pad(s);
+    if (localToday() !== today) render();   // midnight: knock one off
+  }
+
+  // ---------- Confetti ----------
+  const cv = $('fx'), cx = cv.getContext('2d');
+  let parts = [], running = false;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function size() { cv.width = innerWidth * devicePixelRatio; cv.height = innerHeight * devicePixelRatio; }
+  size(); addEventListener('resize', size);
+  const COLORS = ['#ffd84a', '#161a22', '#e2483b', '#109c74', '#2f72de'];
+  function burst(x, y, n = 140) {
+    if (reduce) return;
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2, v = 4 + Math.random() * 9;
+      parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 6, r: 3 + Math.random() * 5, c: COLORS[i % COLORS.length], rot: Math.random() * 6, vr: (Math.random() - .5) * .4, life: 1 });
+    }
+    if (!running) { running = true; requestAnimationFrame(step); }
+  }
+  function step() {
+    const dpr = devicePixelRatio;
+    cx.clearRect(0, 0, cv.width, cv.height);
+    parts.forEach(p => {
+      p.vy += .32; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life -= .006;
+      cx.save(); cx.globalAlpha = Math.max(0, p.life); cx.translate(p.x * dpr, p.y * dpr); cx.rotate(p.rot);
+      cx.fillStyle = p.c; cx.fillRect(-p.r * dpr, -p.r * .45 * dpr, p.r * 2 * dpr, p.r * .9 * dpr); cx.restore();
+    });
+    parts = parts.filter(p => p.life > 0 && p.y < innerHeight + 40);
+    if (parts.length) requestAnimationFrame(step); else { running = false; cx.clearRect(0, 0, cv.width, cv.height); }
+  }
+  $('big').addEventListener('click', e => {
+    const r = $('big').getBoundingClientRect();
+    burst(e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
+  });
+
+  render();
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
