@@ -7,7 +7,7 @@
 <meta name="description" content="Live countdown of second-year college days left, 2026–27.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%23ffd84a%22/><path d=%22M14 14v36M24 14v36M34 14v36M44 14v36M8 40L56 22%22 stroke=%22%23161a22%22 stroke-width=%225%22 stroke-linecap=%22round%22/></svg>">
 <style>html,body{margin:0}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
-<title>Days Till Freedom</title>
+<title>College Countdown</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;800;900&family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -451,7 +451,7 @@ footer b { color: var(--chalk); font-weight: 500; }
     ['2027-02-19', 'Shivaji Maharaj Jayanti · holiday', 'off'],
     ['2027-02-27', 'Last class. Ever.', 'big'],
     ['2027-03-01', 'End Term · Module VII (1–6 Mar)', 'exam'],
-    ['2027-03-06', 'Last paper. You are free.', 'big'],
+    ['2027-03-06', 'Last paper. Second year done.', 'big'],
     ['2027-03-20', 'Module VII results', ''],
     ['2027-04-03', 'Convocation', 'big'],
   ];
@@ -466,7 +466,7 @@ footer b { color: var(--chalk); font-weight: 500; }
     ['2027-03-01', 'exam', 'End VII'],
   ];
   const TRACK_END = '2027-03-07';
-  const FREEDOM = new Date('2027-03-06T17:00:00+05:30');
+  const LAST_PAPER = new Date('2027-03-06T17:00:00+05:30');
 
   // ---------- Date helpers (keys are YYYY-MM-DD, math in UTC) ----------
   const DAY = 864e5;
@@ -807,11 +807,11 @@ footer b { color: var(--chalk); font-weight: 500; }
     firstPaint = false;
   }
 
-  // ---------- Freedom clock ----------
+  // ---------- Last-paper clock ----------
   const clock = $('clock');
   clock.innerHTML = ['d', 'h', 'm', 's'].map((u, i) => `${i ? '<span class="sep">:</span>' : ''}<div><b id="c${u}">0</b><small>${{ d: 'days', h: 'hrs', m: 'min', s: 'sec' }[u]}</small></div>`).join('');
   function tick() {
-    let ms = Math.max(0, FREEDOM - Date.now());
+    let ms = Math.max(0, LAST_PAPER - Date.now());
     const d = Math.floor(ms / DAY); ms -= d * DAY;
     const h = Math.floor(ms / 36e5); ms -= h * 36e5;
     const m = Math.floor(ms / 6e4); ms -= m * 6e4;
